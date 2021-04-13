@@ -7,7 +7,7 @@ export class BinanceBot {
     this.apiKey = apiKey;
     this.secretKey = secretKey;
     console.log("BinanceBot initialized.");
-    this.simulate();
+    //this.simulate();
   }
 
   async getTime() {
@@ -175,6 +175,43 @@ export class BinanceBot {
         (Math.pow(resultRatePercent, timesPerYear) - 1) * 100,
       "Times per year: " + timesPerYear
     );
+  }
+
+  async start() {
+    /*
+      USDTTRY ve BUSD için 14 lü grafikleri al.
+      Hesaptaki paraları al.
+      RSI hesapla.
+      RSI eşiklere uygunsa{
+        BUSD ALMA{
+          USDT varsa ve eşiği geçiyorsa sat.
+          Başarılı olduysa{
+            BUSD al.
+            Başarılı olduysa{
+              ok
+            }olmadıysa{
+              Tekrar dene.
+            }
+          }olmadıysa{
+            Bir daha dene.
+          }
+        }
+        USDT ALMA{
+          BUSD varsa ve eşiği geçiyorsa sat.
+          Başarılı olduysa{
+            USDT al.
+            Başarılı olduysa{
+              ok
+            }olmadıysa{
+              Tekrar dene.
+            }
+          }olmadıysa{
+            Bir daha dene.
+          }
+        }
+      }
+    
+    */
   }
 
   getSignature(message) {
