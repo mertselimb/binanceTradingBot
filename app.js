@@ -37,7 +37,7 @@ const deneme = async () => {
   busdusdtData = await binanceBot.calcRsi(busdusdtData, optInTimePeriod);
 
   let nextOrder = "buy";
-  let tl = 1000;
+  let tl = 100000;
   let usdt = 0;
   let busd = 0;
   busdusdtData.rsi.forEach((rsi, i) => {
@@ -55,12 +55,9 @@ const deneme = async () => {
   });
 
   console.log("tl: " + tl, "usdt: " + usdt, "busd: " + busd);
-  console.log(
-    "result:" +
-      (usdt * usdttryData.close[len - 1] +
-        busd * busdtryData.close[len - 1] +
-        tl)
-  );
+  const result =
+    usdt * usdttryData.close[len - 1] + busd * busdtryData.close[len - 1] + tl;
+  console.log("result:" + result, "percentage: " + result / 100000);
 };
 deneme();
 
