@@ -3,13 +3,26 @@ const { createHmac } = require("crypto"),
   fetch = require("node-fetch");
 
 export class BinanceBot {
-  constructor(apiKey, secretKey) {
+  constructor(
+    apiKey,
+    secretKey,
+    logger,
+    optInTimePeriod = 14,
+    interval = 5,
+    intervalType = "m"
+  ) {
     this.apiKey = apiKey;
     this.secretKey = secretKey;
-    console.log("BinanceBot initialized.");
+    this.logger = logger;
+    this.optInTimePeriod = optInTimePeriod;
+    this.interval = interval;
+    this.intervalType = intervalType;
+    this.nextOrder = "buy";
+    this.logger("BinanceBot initialized.");
     //this.simulate();
     //this.orderMarketBuy("BUSD_TRY", 10);
-    this.orderMarketSellAll("BUSD_TRY", "BUSD");
+    //this.orderMarketBuyAll("BUSD_TRY", "TRY");
+    //this.orderMarketSellAll("BUSD_TRY", "BUSD");
   }
 
   async getTime() {
@@ -79,7 +92,7 @@ export class BinanceBot {
 
   async calcRsi(marketData = [], optInTimePeriod = 9) {
     if (marketData.length === 0) {
-      console.log("Market data is empty");
+      this.logger("Market data is empty");
     }
 
     const rsi = RSI.calculate({
@@ -133,44 +146,44 @@ export class BinanceBot {
     busdusdtData.rsi.forEach((rsi, i) => {
       const rate = busdusdtData.close[i + optInTimePeriod];
       if (rsi < 45 && nextOrder === "buy") {
-        console.log("BUY BUSDTRY: ", "1/RATE: " + 1 / rate, "RSI: " + rsi);
-        console.log("USDT: " + usdt, "BUSD: " + busd);
+        this.logger("BUY BUSDTRY: ", "1/RATE: " + 1 / rate, "RSI: " + rsi);
+        this.logger("USDT: " + usdt, "BUSD: " + busd);
         tl += usdt * usdttryData.close[i + optInTimePeriod];
         usdt = 0;
         busd += tl / busdtryData.close[i + optInTimePeriod];
         tl = 0;
         rateResult *= 1 / rate;
         nextOrder = "sell";
-        console.log("USDT: " + usdt, "BUSD: " + busd);
+        this.logger("USDT: " + usdt, "BUSD: " + busd);
       } else if (rsi > 55 && nextOrder === "sell") {
-        console.log("BUY *USDTTRY: ", "RATE: " + rate, "RSI: " + rsi);
-        console.log("USDT: " + usdt, "BUSD: " + busd);
+        this.logger("BUY *USDTTRY: ", "RATE: " + rate, "RSI: " + rsi);
+        this.logger("USDT: " + usdt, "BUSD: " + busd);
         tl += busd * busdtryData.close[i + optInTimePeriod];
         busd = 0;
         usdt += tl / usdttryData.close[i + optInTimePeriod];
         tl = 0;
         rateResult *= rate;
         nextOrder = "buy";
-        console.log("USDT: " + usdt, "BUSD: " + busd);
+        this.logger("USDT: " + usdt, "BUSD: " + busd);
       }
     });
 
-    console.log("RESULTS:");
-    console.log("USDT: " + usdt, "BUSD: " + busd);
+    this.logger("RESULTS:");
+    this.logger("USDT: " + usdt, "BUSD: " + busd);
     const result =
       usdt +
       (busd * busdtryData.close[len - 1] + tl) / usdttryData.close[len - 1];
     const resultPercent = result / startUSDT;
     const resultRatePercent = rateResult / startUSDT;
     const timesPerYear = ((365 / interval) * len) / 60 / 24;
-    console.log(
+    this.logger(
       "Result:" + result,
       "Percentage: %" + (resultPercent - 1) * 100,
       "Yearly percentage: %" +
         (Math.pow(resultPercent, timesPerYear) - 1) * 100,
       "Times per year: " + timesPerYear
     );
-    console.log(
+    this.logger(
       "RateResult:" + rateResult,
       "Percentage: %" + (resultRatePercent - 1) * 100,
       "Yearly percentage: %" +
@@ -199,12 +212,37 @@ export class BinanceBot {
       }
     );
     const json = await response.json();
-    console.log(json);
+    this.logger(json);
   }
+
+  async orderMarketBuyAll(symbol, main) {
+    let quantity = await this.getAssetAmount(main);
+    let queryString =
+      "symbol=" +
+      symbol +
+      "&side=0&type=2&quoteOrderQty=" +
+      quantity +
+      "&timestamp=" +
+      new Date().getTime();
+    queryString += "&signature=" + this.getSignature(queryString);
+
+    const response = await fetch(
+      "http://www.trbinance.com/open/v1/orders" + "?" + queryString,
+      {
+        method: "POST",
+        headers: {
+          "X-MBX-APIKEY": this.apiKey,
+        },
+      }
+    );
+    const json = await response.json();
+    this.logger(json);
+  }
+
   async orderMarketSellAll(symbol, main) {
     let quantity = await this.getAssetAmount(main);
     quantity = this.toFixed(parseFloat(quantity), 2);
-    console.log(quantity);
+    this.logger(quantity);
     let queryString =
       "symbol=" + symbol + "&side=1&type=2&quantity=" + quantity;
     +"&timestamp=" + new Date().getTime();
@@ -220,10 +258,63 @@ export class BinanceBot {
       }
     );
     const json = await response.json();
-    console.log(json);
+    this.logger(json);
   }
 
-  async start() {
+  async turn() {
+    const busdtryData = await this.getKlines(
+      "BUSDTRY",
+      this.interval + this.intervalType,
+      this.optInTimePeriod
+    );
+    const usdttryData = await this.getKlines(
+      "USDTTRY",
+      this.interval + this.intervalType,
+      this.optInTimePeriod
+    );
+
+    let busdusdtData = {
+      open: [],
+      close: [],
+      high: [],
+      low: [],
+      volume: [],
+      rsi: [],
+    };
+
+    for (let i = 0; i < busdtryData.open.length; i++) {
+      busdusdtData.open.push(busdtryData.open[i] / usdttryData.open[i]);
+      busdusdtData.close.push(busdtryData.close[i] / usdttryData.close[i]);
+      busdusdtData.high.push(busdtryData.high[i] / usdttryData.high[i]);
+      busdusdtData.low.push(busdtryData.low[i] / usdttryData.low[i]);
+      busdusdtData.volume.push(busdtryData.volume[i] / usdttryData.volume[i]);
+    }
+
+    busdusdtData = await this.calcRsi(busdusdtData, this.optInTimePeriod);
+
+    const rate = busdusdtData.close[i + optInTimePeriod];
+    if (rsi < 45 && nextOrder === "buy") {
+      this.logger("BUY BUSDTRY: ", "1/RATE: " + 1 / rate, "RSI: " + rsi);
+      this.logger("USDT: " + usdt, "BUSD: " + busd);
+      tl += usdt * usdttryData.close[i + optInTimePeriod];
+      usdt = 0;
+      busd += tl / busdtryData.close[i + optInTimePeriod];
+      tl = 0;
+      rateResult *= 1 / rate;
+      nextOrder = "sell";
+      this.logger("USDT: " + usdt, "BUSD: " + busd);
+    } else if (rsi > 55 && nextOrder === "sell") {
+      this.logger("BUY *USDTTRY: ", "RATE: " + rate, "RSI: " + rsi);
+      this.logger("USDT: " + usdt, "BUSD: " + busd);
+      tl += busd * busdtryData.close[i + optInTimePeriod];
+      busd = 0;
+      usdt += tl / usdttryData.close[i + optInTimePeriod];
+      tl = 0;
+      rateResult *= rate;
+      nextOrder = "buy";
+      this.logger("USDT: " + usdt, "BUSD: " + busd);
+    }
+
     /*
       USDTTRY ve BUSD için 14 lü grafikleri al.
       Hesaptaki paraları al.

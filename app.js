@@ -12,7 +12,12 @@ app.set("view engine", "ejs");
 
 let logs = [];
 
-const binanceBot = new BinanceBot(config.apiKey, config.apiSecret);
+const binanceBot = new BinanceBot(config.apiKey, config.apiSecret, logger);
+
+function logger(log) {
+  logs.push(log);
+  console.log(log);
+}
 
 app.listen(process.env.PORT || port, () => {
   console.log(
