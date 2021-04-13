@@ -15,7 +15,7 @@ let logs = [];
 const binanceBot = new BinanceBotServer.BinanceBot(config.apiKey, config.apiSecret);
 
  const deneme = async () => {
-     console.log(await binanceBot.getAssetAmount("ADA"));
+     console.log(await binanceBot.getKlines("BUSDUSDT","5m"));
 }
 deneme();
 
