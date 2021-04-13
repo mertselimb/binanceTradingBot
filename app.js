@@ -31,6 +31,16 @@ app.get("/", function (req, res) {
   res.send(logs);
 });
 
+app.get("/start", function (req, res) {
+  binanceBot.stop();
+  binanceBot.start();
+  res.send("started");
+});
+app.get("/stop", function (req, res) {
+  binanceBot.stop();
+  res.send("stopped");
+});
+
 app.listen(process.env.PORT || port, () => {
   logger(
     `Binance Trading Bot listening at http://localhost:${

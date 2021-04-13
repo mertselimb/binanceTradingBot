@@ -19,6 +19,7 @@ export class BinanceBot {
     this.intervalType = intervalType;
     this.nextOrder = "buy";
     this.logger("BinanceBot initialized.");
+    //this.stop()
     //this.simulate();
     //this.orderMarketBuy("BUSD_TRY", 10);
     //this.orderMarketBuyAll("BUSD_TRY", "TRY");
@@ -360,12 +361,14 @@ export class BinanceBot {
   }
 
   async start() {
+    this.logger("Starting the bot...");
     this.turnInterval = setInterval(function () {
       this.turn();
     }, 300000);
   }
 
   async stop() {
+    this.logger("Stopping the bot...");
     clearInterval(this.turnInterval);
   }
 
