@@ -19,10 +19,11 @@ export class BinanceBot {
     this.intervalType = intervalType;
     this.nextOrder = "buy";
     this.logger("BinanceBot initialized.");
-    this.simulate();
+    //this.simulate();
     //this.orderMarketBuy("BUSD_TRY", 10);
     //this.orderMarketBuyAll("BUSD_TRY", "TRY");
     //this.orderMarketSellAll("BUSD_TRY", "BUSD");
+    this.start();
   }
 
   async getTime() {
