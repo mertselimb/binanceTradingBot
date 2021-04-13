@@ -19,6 +19,8 @@ function logger(log) {
   console.log(log);
 }
 
+
+
 app.listen(process.env.PORT || port, () => {
   console.log(
     `Binance Trading Bot listening at http://localhost:${

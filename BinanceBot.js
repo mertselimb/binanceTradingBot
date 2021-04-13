@@ -19,7 +19,7 @@ export class BinanceBot {
     this.intervalType = intervalType;
     this.nextOrder = "buy";
     this.logger("BinanceBot initialized.");
-    //this.simulate();
+    this.simulate();
     //this.orderMarketBuy("BUSD_TRY", 10);
     //this.orderMarketBuyAll("BUSD_TRY", "TRY");
     //this.orderMarketSellAll("BUSD_TRY", "BUSD");
@@ -146,25 +146,32 @@ export class BinanceBot {
     busdusdtData.rsi.forEach((rsi, i) => {
       const rate = busdusdtData.close[i + optInTimePeriod];
       if (rsi < 45 && nextOrder === "buy") {
-        this.logger("BUY BUSDTRY: ", "1/RATE: " + 1 / rate, "RSI: " + rsi);
-        this.logger("USDT: " + usdt, "BUSD: " + busd);
+        this.logger("BUY BUSDTRY: ");
+        this.logger("1/RATE: " + 1 / rate, "RSI: " + rsi);
+        this.logger("USDT: " + usdt);
+        this.logger("BUSD: " + busd);
         tl += usdt * usdttryData.close[i + optInTimePeriod];
         usdt = 0;
         busd += tl / busdtryData.close[i + optInTimePeriod];
         tl = 0;
         rateResult *= 1 / rate;
         nextOrder = "sell";
-        this.logger("USDT: " + usdt, "BUSD: " + busd);
+        this.logger("USDT: " + usdt);
+        this.logger("BUSD: " + busd);
       } else if (rsi > 55 && nextOrder === "sell") {
-        this.logger("BUY *USDTTRY: ", "RATE: " + rate, "RSI: " + rsi);
-        this.logger("USDT: " + usdt, "BUSD: " + busd);
+        this.logger("BUY *USDTTRY: ");
+        this.logger("RATE: " + rate);
+        this.logger("RSI: " + rsi);
+        this.logger("USDT: " + usdt);
+        this.logger("BUSD: " + busd);
         tl += busd * busdtryData.close[i + optInTimePeriod];
         busd = 0;
         usdt += tl / usdttryData.close[i + optInTimePeriod];
         tl = 0;
         rateResult *= rate;
         nextOrder = "buy";
-        this.logger("USDT: " + usdt, "BUSD: " + busd);
+        this.logger("USDT: " + usdt);
+        this.logger("BUSD: " + busd);
       }
     });
 
@@ -174,22 +181,21 @@ export class BinanceBot {
       usdt +
       (busd * busdtryData.close[len - 1] + tl) / usdttryData.close[len - 1];
     const resultPercent = result / startUSDT;
-    const resultRatePercent = rateResult / startUSDT;
+    // const resultRatePercent = rateResult / startUSDT;
     const timesPerYear = ((365 / interval) * len) / 60 / 24;
+    this.logger("Result:" + result);
+    this.logger("Percentage: %" + (resultPercent - 1) * 100);
     this.logger(
-      "Result:" + result,
-      "Percentage: %" + (resultPercent - 1) * 100,
-      "Yearly percentage: %" +
-        (Math.pow(resultPercent, timesPerYear) - 1) * 100,
-      "Times per year: " + timesPerYear
+      "Yearly percentage: %" + (Math.pow(resultPercent, timesPerYear) - 1) * 100
     );
-    this.logger(
-      "RateResult:" + rateResult,
-      "Percentage: %" + (resultRatePercent - 1) * 100,
-      "Yearly percentage: %" +
-        (Math.pow(resultRatePercent, timesPerYear) - 1) * 100,
-      "Times per year: " + timesPerYear
-    );
+    this.logger("Times per year: " + timesPerYear);
+    // this.logger("RateResult:" + rateResult);
+    // this.logger("Percentage: %" + (resultRatePercent - 1) * 100);
+    // this.logger(
+    //   "Yearly percentage: %" +
+    //     (Math.pow(resultRatePercent, timesPerYear) - 1) * 100
+    // );
+    // this.logger("Times per year: " + timesPerYear);
   }
 
   async orderMarketBuy(symbol, quoteOrderQty) {
@@ -294,25 +300,32 @@ export class BinanceBot {
 
     const rate = busdusdtData.close[i + optInTimePeriod];
     if (rsi < 45 && nextOrder === "buy") {
-      this.logger("BUY BUSDTRY: ", "1/RATE: " + 1 / rate, "RSI: " + rsi);
-      this.logger("USDT: " + usdt, "BUSD: " + busd);
+      this.logger("BUY BUSDTRY: ");
+      this.logger("1/RATE: " + 1 / rate, "RSI: " + rsi);
+      this.logger("USDT: " + usdt);
+      this.logger("BUSD: " + busd);
       tl += usdt * usdttryData.close[i + optInTimePeriod];
       usdt = 0;
       busd += tl / busdtryData.close[i + optInTimePeriod];
       tl = 0;
       rateResult *= 1 / rate;
       nextOrder = "sell";
-      this.logger("USDT: " + usdt, "BUSD: " + busd);
+      this.logger("USDT: " + usdt);
+      this.logger("BUSD: " + busd);
     } else if (rsi > 55 && nextOrder === "sell") {
-      this.logger("BUY *USDTTRY: ", "RATE: " + rate, "RSI: " + rsi);
-      this.logger("USDT: " + usdt, "BUSD: " + busd);
+      this.logger("BUY *USDTTRY: ");
+      this.logger("RATE: " + rate);
+      this.logger("RSI: " + rsi);
+      this.logger("USDT: " + usdt);
+      this.logger("BUSD: " + busd);
       tl += busd * busdtryData.close[i + optInTimePeriod];
       busd = 0;
       usdt += tl / usdttryData.close[i + optInTimePeriod];
       tl = 0;
       rateResult *= rate;
       nextOrder = "buy";
-      this.logger("USDT: " + usdt, "BUSD: " + busd);
+      this.logger("USDT: " + usdt);
+      this.logger("BUSD: " + busd);
     }
 
     /*
