@@ -41,23 +41,38 @@ const deneme = async () => {
   let usdt = 0;
   let busd = 0;
   busdusdtData.rsi.forEach((rsi, i) => {
-    if (rsi < 35 && nextOrder === "buy") {
-      tl += usdt * usdttryData.close[i + optInTimePeriod];
+    const diff =
+      busdtryData.open[i + optInTimePeriod] -
+      usdttryData.open[i + optInTimePeriod];
+    if (rsi < 45 && nextOrder === "buy") {
+      console.log(
+        "BUY usdttry: " + usdttryData.open[i + optInTimePeriod],
+        "SELL busdtry: " + busdtryData.open[i + optInTimePeriod],
+        "DIFF: " + diff
+      );
+      tl += usdt * usdttryData.open[i + optInTimePeriod];
       usdt = 0;
-      busd += tl / busdtryData.close[i + optInTimePeriod];
+      busd += tl / busdtryData.open[i + optInTimePeriod];
       tl = 0;
-    } else if (rsi > 65 && nextOrder === "sell") {
-      tl += usdt * busdtryData.close[i + optInTimePeriod];
+      nextOrder = "sell";
+    } else if (rsi > 55 && nextOrder === "sell") {
+      console.log(
+        "SELL busdtry: " + busdtryData.open[i + optInTimePeriod],
+        "BUY usdttry: " + usdttryData.open[i + optInTimePeriod],
+        "DIFF: " + -diff
+      );
+      tl += busd * busdtryData.open[i + optInTimePeriod];
       busd = 0;
-      usdt += tl / usdttryData.close[i + optInTimePeriod];
+      usdt += tl / usdttryData.open[i + optInTimePeriod];
       tl = 0;
+      nextOrder = "buy";
     }
   });
 
   console.log("tl: " + tl, "usdt: " + usdt, "busd: " + busd);
   const result =
     usdt * usdttryData.close[len - 1] + busd * busdtryData.close[len - 1] + tl;
-  console.log("result:" + result, "percentage: " + result / 100000);
+  console.log("result:" + result, "percentage: %" + (result / 100000) * 100);
 };
 deneme();
 
