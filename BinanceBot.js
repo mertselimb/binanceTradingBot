@@ -274,12 +274,12 @@ export class BinanceBot {
     const busdtryData = await this.getKlines(
       "BUSDTRY",
       this.interval + this.intervalType,
-      this.optInTimePeriod
+      this.optInTimePeriod+1
     );
     const usdttryData = await this.getKlines(
       "USDTTRY",
       this.interval + this.intervalType,
-      this.optInTimePeriod
+      this.optInTimePeriod+1
     );
 
     let busdusdtData = {
@@ -302,24 +302,22 @@ export class BinanceBot {
     busdusdtData = await this.calcRsi(busdusdtData, this.optInTimePeriod);
 
     const index = busdusdtData.rsi.length - 1;
-    const rate = busdusdtData.close[index];
+    const rate = busdusdtData.close[busdusdtData.close.length - 1];
     const rsi = busdusdtData.rsi[index];
-    if (rsi < 45 && this.nextOrder === "buy") {
+    this.logger("RATE: " + rate);
+    this.logger("RSI: " + rsi);
+    if (rsi < 49 && this.nextOrder === "buy") {
       this.logger("BUY BUSDTRY: ");
-      this.logger("1/RATE: " + 1 / rate);
-      this.logger("RSI: " + rsi);
 
       this.orderMarketSellAll("USDT_TRY", "USDT");
       this.orderMarketBuyAll("BUSD_TRY", "TRY");
       this.logger("BUSD at hand: " + (await this.getAssetAmount("BUSD")));
 
       nextOrder = "sell";
-    } else if (rsi > 55 && this.nextOrder === "sell") {
+    } else if (rsi > 51 && this.nextOrder === "sell") {
       this.logger("BUY *USDTTRY: ");
-      this.logger("RATE: " + rate);
-      this.logger("RSI: " + rsi);
 
-      this.orderMarketSellAll("BUSD_TRY", "USDT");
+      this.orderMarketSellAll("BUSD_TRY", "BUSD");
       this.orderMarketBuyAll("USDT_TRY", "TRY");
       this.logger("USDT at hand: " + (await this.getAssetAmount("USDT")));
 
@@ -365,6 +363,7 @@ export class BinanceBot {
 
   async start() {
     this.logger("Starting the bot...");
+    this.turn();
     this.turnInterval = setInterval(() => {
       this.turn();
     }, 300000);
