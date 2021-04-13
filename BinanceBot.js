@@ -8,6 +8,8 @@ export class BinanceBot {
     this.secretKey = secretKey;
     console.log("BinanceBot initialized.");
     //this.simulate();
+    //this.orderMarketBuy("BUSD_TRY", 10);
+    this.orderMarketSellAll("BUSD_TRY", "BUSD");
   }
 
   async getTime() {
@@ -177,6 +179,50 @@ export class BinanceBot {
     );
   }
 
+  async orderMarketBuy(symbol, quoteOrderQty) {
+    let queryString =
+      "symbol=" +
+      symbol +
+      "&side=0&type=2&quoteOrderQty=" +
+      quoteOrderQty +
+      "&timestamp=" +
+      new Date().getTime();
+    queryString += "&signature=" + this.getSignature(queryString);
+
+    const response = await fetch(
+      "http://www.trbinance.com/open/v1/orders" + "?" + queryString,
+      {
+        method: "POST",
+        headers: {
+          "X-MBX-APIKEY": this.apiKey,
+        },
+      }
+    );
+    const json = await response.json();
+    console.log(json);
+  }
+  async orderMarketSellAll(symbol, main) {
+    let quantity = await this.getAssetAmount(main);
+    quantity = this.toFixed(parseFloat(quantity), 2);
+    console.log(quantity);
+    let queryString =
+      "symbol=" + symbol + "&side=1&type=2&quantity=" + quantity;
+    +"&timestamp=" + new Date().getTime();
+    queryString += "&signature=" + this.getSignature(queryString);
+
+    const response = await fetch(
+      "http://www.trbinance.com/open/v1/orders" + "?" + queryString,
+      {
+        method: "POST",
+        headers: {
+          "X-MBX-APIKEY": this.apiKey,
+        },
+      }
+    );
+    const json = await response.json();
+    console.log(json);
+  }
+
   async start() {
     /*
       USDTTRY ve BUSD için 14 lü grafikleri al.
@@ -216,5 +262,10 @@ export class BinanceBot {
 
   getSignature(message) {
     return createHmac("sha256", this.secretKey).update(message).digest("hex");
+  }
+
+  toFixed(num, fixed) {
+    var re = new RegExp("^-?\\d+(?:.\\d{0," + (fixed || -1) + "})?");
+    return num.toString().match(re)[0];
   }
 }
