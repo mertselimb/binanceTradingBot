@@ -17,7 +17,7 @@ export class BinanceBot {
 
     async updateAccountAssets(){
         let queryString = "timestamp=" + new Date().getTime();
-        queryString += "&signature=" + this.hash(queryString);
+        queryString += "&signature=" + this.getSignature(queryString);
 
         const response = await fetch("http://www.trbinance.com/open/v1/account/spot" + "?" + queryString, {
             method: 'GET',
@@ -36,7 +36,7 @@ export class BinanceBot {
     }
 
 
-    hash(message)  {
+    getSignature(message)  {
         return createHmac('sha256', this.secretKey)
                .update(message)
                .digest('hex');
