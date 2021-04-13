@@ -1,5 +1,5 @@
 const { createHmac } = require("crypto"),
-  talib = require("talib"),
+  RSI = require("technicalindicators").RSI,
   fetch = require("node-fetch");
 
 export class BinanceBot {
@@ -78,18 +78,13 @@ export class BinanceBot {
     if (marketData.length === 0) {
       console.log("Market data is empty");
     }
-    const rsi = await talib.execute({
-      inReal: true,
-      name: "RSI",
-      startIdx: 0,
-      endIdx: marketData.close.length - 1,
-      high: marketData.high,
-      low: marketData.low,
-      close: marketData.close,
-      optInTimePeriod,
+
+    const rsi = RSI.calculate({
+      values: marketData.close,
+      period: optInTimePeriod,
     });
 
-    return { ...marketData, rsi: rsi.result.outReal };
+    return { ...marketData, rsi };
   }
 
   getSignature(message) {

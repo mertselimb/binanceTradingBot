@@ -28,6 +28,7 @@ const deneme = async () => {
     interval + intervalType,
     len
   );
+
   let busdusdtData = {
     open: [],
     close: [],
@@ -44,50 +45,57 @@ const deneme = async () => {
     busdusdtData.low.push(busdtryData.low[i] / usdttryData.low[i]);
     busdusdtData.volume.push(busdtryData.volume[i] / usdttryData.volume[i]);
   }
-  const optInTimePeriod = 9;
+  const optInTimePeriod = 14;
   busdusdtData = await binanceBot.calcRsi(busdusdtData, optInTimePeriod);
-
   let nextOrder = "buy";
-  let tl = 100000;
-  let usdt = 0;
+  const startUSDT = 100000;
+  let tl = 0;
+  let usdt = startUSDT;
   let busd = 0;
   let rateResult = 100000;
   busdusdtData.rsi.forEach((rsi, i) => {
-    const rate = busdusdtData.open[i + optInTimePeriod];
-    if (rsi < 35 && nextOrder === "buy" && rate > 1) {
-      console.log("BUY BUSDTRY: " + rate);
-      tl += usdt * usdttryData.open[i + optInTimePeriod];
+    const rate = busdusdtData.close[i + optInTimePeriod];
+    if (rsi < 45 && nextOrder === "buy") {
+      console.log("BUY BUSDTRY: ", "RATE: " + rate, "RSI: " + rsi);
+      console.log("USDT: " + usdt, "BUSD: " + busd);
+      tl += usdt * usdttryData.close[i + optInTimePeriod];
       usdt = 0;
-      busd += tl / busdtryData.open[i + optInTimePeriod];
+      busd += tl / busdtryData.close[i + optInTimePeriod];
       tl = 0;
       rateResult *= rate;
       nextOrder = "sell";
-    } else if (rsi > 65 && nextOrder === "sell" && rate < 1) {
-      console.log("BUY *USDTTRY: " + 1 / rate);
-      tl += busd * busdtryData.open[i + optInTimePeriod];
+      console.log("USDT: " + usdt, "BUSD: " + busd);
+    } else if (rsi > 55 && nextOrder === "sell") {
+      console.log("BUY *USDTTRY: ", "1/RATE: " + 1 / rate, "RSI: " + rsi);
+      console.log("USDT: " + usdt, "BUSD: " + busd);
+      tl += busd * busdtryData.close[i + optInTimePeriod];
       busd = 0;
-      usdt += tl / usdttryData.open[i + optInTimePeriod];
+      usdt += tl / usdttryData.close[i + optInTimePeriod];
       tl = 0;
       rateResult *= 1 / rate;
       nextOrder = "buy";
+      console.log("USDT: " + usdt, "BUSD: " + busd);
     }
   });
   console.log("RESULTS:");
-  console.log("TL: " + tl, "USDT: " + usdt, "BUSD: " + busd);
+  console.log("USDT: " + usdt, "BUSD: " + busd);
   const result =
-    usdt * usdttryData.close[len - 1] + busd * busdtryData.close[len - 1] + tl;
+    usdt +
+    (busd * busdtryData.close[len - 1] + tl) / usdttryData.close[len - 1];
+  const resultPercent = result / startUSDT;
+  const resultRatePercent = rateResult / startUSDT;
   console.log(
     "Result:" + result,
-    "Percentage: %" + result / 100000,
+    "Percentage: %" + resultPercent,
     "Yearly percentage: %" +
-      Math.pow(result / 100000, ((365 / interval) * len) / 60 / 24),
+      Math.pow(resultPercent, ((365 / interval) * len) / 60 / 24),
     "Times per year: " + ((365 / interval) * len) / 60 / 24
   );
   console.log(
     "RateResult:" + rateResult,
-    "Percentage: %" + rateResult / 100000,
+    "Percentage: %" + resultRatePercent,
     "Yearly percentage: %" +
-      Math.pow(rateResult / 100000, ((365 / interval) * len) / 60 / 24),
+      Math.pow(resultRatePercent, ((365 / interval) * len) / 60 / 24),
     "Times per year: " + ((365 / interval) * len) / 60 / 24
   );
 };
