@@ -144,10 +144,10 @@ export class BinanceBot {
     let usdt = startUSDT;
     let busd = 0;
     let rateResult = 100000;
-
+    let count = 0;
     busdusdtData.rsi.forEach((rsi, i) => {
       const rate = busdusdtData.close[i + optInTimePeriod];
-      if (rsi < 45 && nextOrder === "buy") {
+      if (rsi < 49 && nextOrder === "buy") {
         this.logger("BUY BUSDTRY: ");
         this.logger("1/RATE: " + 1 / rate, "RSI: " + rsi);
         this.logger("USDT: " + usdt);
@@ -160,7 +160,8 @@ export class BinanceBot {
         nextOrder = "sell";
         this.logger("USDT: " + usdt);
         this.logger("BUSD: " + busd);
-      } else if (rsi > 55 && nextOrder === "sell") {
+        count++;
+      } else if (rsi > 51 && nextOrder === "sell") {
         this.logger("BUY *USDTTRY: ");
         this.logger("RATE: " + rate);
         this.logger("RSI: " + rsi);
@@ -172,6 +173,7 @@ export class BinanceBot {
         tl = 0;
         rateResult *= rate;
         nextOrder = "buy";
+        count++;
         this.logger("USDT: " + usdt);
         this.logger("BUSD: " + busd);
       }
@@ -191,6 +193,8 @@ export class BinanceBot {
       "Yearly percentage: %" + (Math.pow(resultPercent, timesPerYear) - 1) * 100
     );
     this.logger("Times per year: " + timesPerYear);
+    this.logger("COUNT: " + count);
+    this.logger("COUNT PER YEAR: " + count * timesPerYear);
     // this.logger("RateResult:" + rateResult);
     // this.logger("Percentage: %" + (resultRatePercent - 1) * 100);
     // this.logger(
@@ -220,7 +224,6 @@ export class BinanceBot {
       }
     );
     const json = await response.json();
-    this.logger(json);
   }
 
   async orderMarketBuyAll(symbol, main) {
@@ -244,7 +247,6 @@ export class BinanceBot {
       }
     );
     const json = await response.json();
-    this.logger(json);
   }
 
   async orderMarketSellAll(symbol, main) {
@@ -266,7 +268,6 @@ export class BinanceBot {
       }
     );
     const json = await response.json();
-    this.logger(json);
   }
 
   async turn() {
@@ -274,12 +275,12 @@ export class BinanceBot {
     const busdtryData = await this.getKlines(
       "BUSDTRY",
       this.interval + this.intervalType,
-      this.optInTimePeriod+1
+      this.optInTimePeriod + 1
     );
     const usdttryData = await this.getKlines(
       "USDTTRY",
       this.interval + this.intervalType,
-      this.optInTimePeriod+1
+      this.optInTimePeriod + 1
     );
 
     let busdusdtData = {
@@ -313,7 +314,7 @@ export class BinanceBot {
       this.orderMarketBuyAll("BUSD_TRY", "TRY");
       this.logger("BUSD at hand: " + (await this.getAssetAmount("BUSD")));
 
-      nextOrder = "sell";
+      this.nextOrder = "sell";
     } else if (rsi > 51 && this.nextOrder === "sell") {
       this.logger("BUY *USDTTRY: ");
 
@@ -321,43 +322,9 @@ export class BinanceBot {
       this.orderMarketBuyAll("USDT_TRY", "TRY");
       this.logger("USDT at hand: " + (await this.getAssetAmount("USDT")));
 
-      nextOrder = "buy";
+      this.nextOrder = "buy";
     }
 
-    /*
-      USDTTRY ve BUSD için 14 lü grafikleri al.
-      Hesaptaki paraları al.
-      RSI hesapla.
-      RSI eşiklere uygunsa{
-        BUSD ALMA{
-          USDT varsa ve eşiği geçiyorsa sat.
-          Başarılı olduysa{
-            BUSD al.
-            Başarılı olduysa{
-              ok
-            }olmadıysa{
-              Tekrar dene.
-            }
-          }olmadıysa{
-            Bir daha dene.
-          }
-        }
-        USDT ALMA{
-          BUSD varsa ve eşiği geçiyorsa sat.
-          Başarılı olduysa{
-            USDT al.
-            Başarılı olduysa{
-              ok
-            }olmadıysa{
-              Tekrar dene.
-            }
-          }olmadıysa{
-            Bir daha dene.
-          }
-        }
-      }
-    
-    */
     this.logger("Turn ended.");
   }
 
