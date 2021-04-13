@@ -1,7 +1,7 @@
 const express = require("express"),
   bodyParser = require("body-parser"),
   config = require('./config.json'),
-  binanceBot = require("./binanceBot"),
+  BinanceBotServer = require("./BinanceBot"),
   app = express(),
   port = 3001;
 
@@ -12,6 +12,13 @@ app.set("view engine", "ejs");
 
 let logs = [];
 
+const binanceBot = new BinanceBotServer.BinanceBot(config.apiKey, config.apiSecret);
+
+ const deneme = async () => {
+    console.log(binanceBot.hash("deneme"));
+    console.log(await binanceBot.getTime());
+}
+deneme();
 
 app.listen(process.env.PORT || port, () => {
     console.log(
