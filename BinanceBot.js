@@ -270,6 +270,7 @@ export class BinanceBot {
   }
 
   async turn() {
+    this.logger("Turn started.");
     const busdtryData = await this.getKlines(
       "BUSDTRY",
       this.interval + this.intervalType,
@@ -300,8 +301,9 @@ export class BinanceBot {
 
     busdusdtData = await this.calcRsi(busdusdtData, this.optInTimePeriod);
 
-    const rate = busdusdtData.close[i + optInTimePeriod];
-    const rsi = busdusdtData.rsi[busdusdtData.rsi.length - 1];
+    const index = busdusdtData.rsi.length - 1;
+    const rate = busdusdtData.close[index];
+    const rsi = busdusdtData.rsi[index];
     if (rsi < 45 && this.nextOrder === "buy") {
       this.logger("BUY BUSDTRY: ");
       this.logger("1/RATE: " + 1 / rate);
@@ -358,11 +360,12 @@ export class BinanceBot {
       }
     
     */
+    this.logger("Turn ended.");
   }
 
   async start() {
     this.logger("Starting the bot...");
-    this.turnInterval = setInterval(function () {
+    this.turnInterval = setInterval(() => {
       this.turn();
     }, 300000);
   }
