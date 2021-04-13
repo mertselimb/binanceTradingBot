@@ -299,33 +299,27 @@ export class BinanceBot {
     busdusdtData = await this.calcRsi(busdusdtData, this.optInTimePeriod);
 
     const rate = busdusdtData.close[i + optInTimePeriod];
-    if (rsi < 45 && nextOrder === "buy") {
+    const rsi = busdusdtData.rsi[busdusdtData.rsi.length - 1];
+    if (rsi < 45 && this.nextOrder === "buy") {
       this.logger("BUY BUSDTRY: ");
-      this.logger("1/RATE: " + 1 / rate, "RSI: " + rsi);
-      this.logger("USDT: " + usdt);
-      this.logger("BUSD: " + busd);
-      tl += usdt * usdttryData.close[i + optInTimePeriod];
-      usdt = 0;
-      busd += tl / busdtryData.close[i + optInTimePeriod];
-      tl = 0;
-      rateResult *= 1 / rate;
+      this.logger("1/RATE: " + 1 / rate);
+      this.logger("RSI: " + rsi);
+
+      this.orderMarketSellAll("USDT_TRY", "USDT");
+      this.orderMarketBuyAll("BUSD_TRY", "TRY");
+      this.logger("BUSD at hand: " + (await this.getAssetAmount("BUSD")));
+
       nextOrder = "sell";
-      this.logger("USDT: " + usdt);
-      this.logger("BUSD: " + busd);
-    } else if (rsi > 55 && nextOrder === "sell") {
+    } else if (rsi > 55 && this.nextOrder === "sell") {
       this.logger("BUY *USDTTRY: ");
       this.logger("RATE: " + rate);
       this.logger("RSI: " + rsi);
-      this.logger("USDT: " + usdt);
-      this.logger("BUSD: " + busd);
-      tl += busd * busdtryData.close[i + optInTimePeriod];
-      busd = 0;
-      usdt += tl / usdttryData.close[i + optInTimePeriod];
-      tl = 0;
-      rateResult *= rate;
+
+      this.orderMarketSellAll("BUSD_TRY", "USDT");
+      this.orderMarketBuyAll("USDT_TRY", "TRY");
+      this.logger("USDT at hand: " + (await this.getAssetAmount("USDT")));
+
       nextOrder = "buy";
-      this.logger("USDT: " + usdt);
-      this.logger("BUSD: " + busd);
     }
 
     /*
@@ -362,6 +356,16 @@ export class BinanceBot {
       }
     
     */
+  }
+
+  async start() {
+    this.turnInterval = setInterval(function () {
+      this.turn();
+    }, 300000);
+  }
+
+  async stop() {
+    clearInterval(this.turnInterval);
   }
 
   getSignature(message) {
