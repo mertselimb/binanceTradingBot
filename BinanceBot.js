@@ -297,6 +297,15 @@ export class BinanceBot {
 
   async orderLimitBuyAll(symbol, price, main) {
     let quantity = await this.getAssetAmount(main);
+    quantity = this.toFixed(parseFloat(quantity), 2);
+    this.logger(
+      "START BUY LIMIT: " +
+        symbol +
+        " quantity: " +
+        quantity +
+        " price: " +
+        price
+    );
     let queryString =
       "symbol=" +
       symbol +
@@ -326,16 +335,50 @@ export class BinanceBot {
       const query = await this.queryOrder(symbol, json.data.orderId);
       status = query.data.status;
       if (query.data.status === 2) {
-        this.logger("BUY: " + symbol);
+        this.logger(
+          "DONE BUY LIMIT: " +
+            symbol +
+            " quantity: " +
+            quantity +
+            " price: " +
+            price
+        );
       } else {
-        this.logger("ERROR: BUY " + symbol + " status: " + query.data.status);
+        this.logger(
+          "ERROR BUY LIMIT: " +
+            symbol +
+            " quantity: " +
+            quantity +
+            " price: " +
+            price +
+            " status: " +
+            query.data.status
+        );
       }
     } else {
       status = json.code;
       if (json.code === 3210) {
-        this.logger("ERROR: BUY " + symbol + " - There is no " + main);
+        this.logger(
+          "ERROR BUY LIMIT: " +
+            symbol +
+            " quantity: " +
+            quantity +
+            " price: " +
+            price +
+            " - There is no " +
+            main
+        );
       } else {
-        this.logger("ERROR: BUY " + symbol + " status: " + json.msg);
+        this.logger(
+          "ERROR BUY LIMIT: " +
+            symbol +
+            " quantity: " +
+            quantity +
+            " price: " +
+            price +
+            " msg: " +
+            json.msg
+        );
       }
     }
 
@@ -347,6 +390,14 @@ export class BinanceBot {
   async orderLimitSellAll(symbol, price, main) {
     let quantity = await this.getAssetAmount(main);
     quantity = this.toFixed(parseFloat(quantity), 2);
+    this.logger(
+      "START SELL LIMIT: " +
+        symbol +
+        " quantity: " +
+        quantity +
+        " price: " +
+        price
+    );
     let queryString =
       "symbol=" +
       symbol +
@@ -376,27 +427,66 @@ export class BinanceBot {
       let query = await this.queryOrder(symbol, json.data.orderId);
       status = query.data.status;
       if (query.data.status === 2) {
-        this.logger("SELL: " + symbol);
+        this.logger(
+          "DONE SELL LIMIT: " +
+            symbol +
+            " quantity: " +
+            quantity +
+            " price: " +
+            price
+        );
       } else {
         let tryAmount = 1;
-        while (query.data.status != 2 || tryAmount < 10) {
+        while (query.data.status != 2 || tryAmount < 25) {
           query = await this.queryOrder(symbol, json.data.orderId);
           tryAmount++;
         }
         if (query.data.status === 2) {
-          this.logger("SELL: " + symbol);
+          this.logger(
+            "DONE SELL LIMIT: " +
+              symbol +
+              " quantity: " +
+              quantity +
+              " price: " +
+              price
+          );
         } else {
           this.logger(
-            "ERROR: SELL " + symbol + " status: " + query.data.status
+            "ERROR SELL LIMIT: " +
+              symbol +
+              " quantity: " +
+              quantity +
+              " price: " +
+              price +
+              " status: " +
+              query.data.status
           );
         }
       }
     } else {
       status = json.code;
       if (json.code === 3210) {
-        this.logger("ERROR: SELL " + symbol + " - There is no " + main);
+        this.logger(
+          "ERROR SELL LIMIT: " +
+            symbol +
+            " quantity: " +
+            quantity +
+            " price: " +
+            price +
+            " - There is no " +
+            main
+        );
       } else {
-        this.logger("ERROR: SELL " + symbol + " status: " + json.msg);
+        this.logger(
+          "ERROR SELL LIMIT: " +
+            symbol +
+            " quantity: " +
+            quantity +
+            " price: " +
+            price +
+            " status: " +
+            json.msg
+        );
       }
     }
 
