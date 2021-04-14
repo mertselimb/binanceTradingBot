@@ -9,7 +9,8 @@ export class BinanceBot {
     logger,
     optInTimePeriod = 14,
     interval = 5,
-    intervalType = "m"
+    intervalType = "m",
+    timeZone = "TRT"
   ) {
     this.apiKey = apiKey;
     this.secretKey = secretKey;
@@ -17,7 +18,8 @@ export class BinanceBot {
     this.optInTimePeriod = optInTimePeriod;
     this.interval = interval;
     this.intervalType = intervalType;
-    this.nextOrder = "buy";
+    this.nextOrder = "sell";
+    this.timeZone = timeZone;
     this.logger("BinanceBot initialized.");
     //this.stop()
     //this.simulate();
@@ -224,8 +226,28 @@ export class BinanceBot {
       }
     );
     const json = await response.json();
-    console.log(json);
-    return json;
+
+    let status;
+    if (json.data) {
+      const query = await this.queryOrder(symbol, json.data.orderId);
+      status = query.data.status;
+      if (query.data.status === 2) {
+        this.logger("BUY: " + symbol);
+      } else {
+        this.logger("ERROR: BUY " + symbol + " status: " + query.data.status);
+      }
+    } else {
+      status = json.code;
+      if (json.code === 3210) {
+        this.logger("ERROR: BUY " + symbol + " - There is no " + main);
+      } else {
+        this.logger("ERROR: BUY " + symbol + " status: " + json.msg);
+      }
+    }
+
+    const result = { ...json, status };
+    console.log(result);
+    return result;
   }
 
   async orderMarketBuyAll(symbol, main) {
@@ -249,8 +271,138 @@ export class BinanceBot {
       }
     );
     const json = await response.json();
-    console.log(json);
-    return json;
+
+    let status;
+    if (json.data) {
+      const query = await this.queryOrder(symbol, json.data.orderId);
+      status = query.data.status;
+      if (query.data.status === 2) {
+        this.logger("BUY: " + symbol);
+      } else {
+        this.logger("ERROR: BUY " + symbol + " status: " + query.data.status);
+      }
+    } else {
+      status = json.code;
+      if (json.code === 3210) {
+        this.logger("ERROR: BUY " + symbol + " - There is no " + main);
+      } else {
+        this.logger("ERROR: BUY " + symbol + " status: " + json.msg);
+      }
+    }
+
+    const result = { ...json, status };
+    console.log(result);
+    return result;
+  }
+
+  async orderLimitBuyAll(symbol, price, main) {
+    let quantity = await this.getAssetAmount(main);
+    let queryString =
+      "symbol=" +
+      symbol +
+      "&price=" +
+      price +
+      "&side=0&type=1&quantity=" +
+      quantity +
+      "%timeInForce=" +
+      this.timeZone +
+      "&timestamp=" +
+      new Date().getTime();
+    queryString += "&signature=" + this.getSignature(queryString);
+
+    const response = await fetch(
+      "http://www.trbinance.com/open/v1/orders" + "?" + queryString,
+      {
+        method: "POST",
+        headers: {
+          "X-MBX-APIKEY": this.apiKey,
+        },
+      }
+    );
+    const json = await response.json();
+
+    let status;
+    if (json.data) {
+      const query = await this.queryOrder(symbol, json.data.orderId);
+      status = query.data.status;
+      if (query.data.status === 2) {
+        this.logger("BUY: " + symbol);
+      } else {
+        this.logger("ERROR: BUY " + symbol + " status: " + query.data.status);
+      }
+    } else {
+      status = json.code;
+      if (json.code === 3210) {
+        this.logger("ERROR: BUY " + symbol + " - There is no " + main);
+      } else {
+        this.logger("ERROR: BUY " + symbol + " status: " + json.msg);
+      }
+    }
+
+    const result = { ...json, status };
+    console.log(result);
+    return result;
+  }
+
+  async orderLimitSellAll(symbol, price, main) {
+    let quantity = await this.getAssetAmount(main);
+    quantity = this.toFixed(parseFloat(quantity), 2);
+    let queryString =
+      "symbol=" +
+      symbol +
+      "&price=" +
+      price +
+      "&side=1&type=1&quantity=" +
+      quantity +
+      "%timeInForce=" +
+      this.timeZone +
+      "&timestamp=" +
+      new Date().getTime();
+    queryString += "&signature=" + this.getSignature(queryString);
+
+    const response = await fetch(
+      "http://www.trbinance.com/open/v1/orders" + "?" + queryString,
+      {
+        method: "POST",
+        headers: {
+          "X-MBX-APIKEY": this.apiKey,
+        },
+      }
+    );
+    const json = await response.json();
+
+    let status;
+    if (json.data) {
+      let query = await this.queryOrder(symbol, json.data.orderId);
+      status = query.data.status;
+      if (query.data.status === 2) {
+        this.logger("SELL: " + symbol);
+      } else {
+        let tryAmount = 1;
+        while (query.data.status != 2 || tryAmount < 10) {
+          query = await this.queryOrder(symbol, json.data.orderId);
+          tryAmount++;
+        }
+        if (query.data.status === 2) {
+          this.logger("SELL: " + symbol);
+        } else {
+          this.logger(
+            "ERROR: SELL " + symbol + " status: " + query.data.status
+          );
+        }
+      }
+    } else {
+      status = json.code;
+      if (json.code === 3210) {
+        this.logger("ERROR: SELL " + symbol + " - There is no " + main);
+      } else {
+        this.logger("ERROR: SELL " + symbol + " status: " + json.msg);
+      }
+    }
+
+    const result = { ...json, status };
+    console.log(result);
+    return result;
   }
 
   async orderMarketSellAll(symbol, main) {
@@ -271,8 +423,39 @@ export class BinanceBot {
       }
     );
     const json = await response.json();
-    console.log(json);
-    return json;
+
+    let status;
+    if (json.data) {
+      let query = await this.queryOrder(symbol, json.data.orderId);
+      status = query.data.status;
+      if (query.data.status === 2) {
+        this.logger("SELL: " + symbol);
+      } else {
+        let tryAmount = 1;
+        while (query.data.status != 2 || tryAmount < 10) {
+          query = await this.queryOrder(symbol, json.data.orderId);
+          tryAmount++;
+        }
+        if (query.data.status === 2) {
+          this.logger("SELL: " + symbol);
+        } else {
+          this.logger(
+            "ERROR: SELL " + symbol + " status: " + query.data.status
+          );
+        }
+      }
+    } else {
+      status = json.code;
+      if (json.code === 3210) {
+        this.logger("ERROR: SELL " + symbol + " - There is no " + main);
+      } else {
+        this.logger("ERROR: SELL " + symbol + " status: " + json.msg);
+      }
+    }
+
+    const result = { ...json, status };
+    console.log(result);
+    return result;
   }
 
   async queryOrder(symbol, id) {
@@ -296,7 +479,7 @@ export class BinanceBot {
     );
     const json = await response.json();
     console.log(json);
-    return json;
+    return { ...json, status: response.status };
   }
 
   async turn() {
@@ -331,91 +514,51 @@ export class BinanceBot {
     busdusdtData = await this.calcRsi(busdusdtData, this.optInTimePeriod);
 
     const index = busdusdtData.rsi.length - 1;
-    const rate = busdusdtData.close[busdusdtData.close.length - 1];
+    const priceIndex = busdusdtData.close.length - 1;
+    const rate = busdusdtData.close[priceIndex];
     const rsi = busdusdtData.rsi[index];
-    if (rsi < 49 && this.nextOrder === "buy") {
+    if (rsi < 45 && this.nextOrder === "buy") {
       this.logger("------------------------------");
       this.logger("RATE: " + rate);
       this.logger("RSI: " + rsi);
 
-      let res0 = await this.orderMarketSellAll("USDT_TRY", "USDT");
-
-      if (res0.data) {
-        let status0 = await this.queryOrder("USDT_TRY", res0.data.orderId);
-        if (status0.data.status === 2) {
-          this.logger("SELL: USDT_TRY");
-        } else if (res0.code === 3210) {
-          this.logger("SELL: USDT_TRY - There is no USDT");
-        } else {
-          this.logger("ERROR: SELL USDT_TRY status:" + status0.data.status);
-        }
-      } else {
-        this.logger("ERROR: SELL USDT_TRY " + res0.msg);
-      }
-
+      await this.orderMarketSellAll(
+        "USDT_TRY",
+        usdttryData.close[priceIndex],
+        "USDT"
+      );
       setTimeout(async () => {
-        let res1 = await this.orderMarketBuyAll("BUSD_TRY", "TRY");
+        await this.orderMarketBuyAll(
+          "BUSD_TRY",
+          busdtryData.close[priceIndex],
+          "TRY"
+        );
 
-        if (res1.data) {
-          let status1 = await this.queryOrder("BUSD_TRY", res1.data.orderId);
-          if (status1.data.status === 2) {
-            this.logger("BUY: BUSD_TRY");
-          } else if (res1.code === 3210) {
-            this.logger("ERROR: BUY BUSD_TRY - There is no TRY");
-          } else {
-            this.logger("ERROR: BUY BUSD_TRY status: " + status1.data.status);
-          }
-        } else {
-          this.logger("ERROR: BUY BUSD_TRY " + res1.msg);
-        }
-  
         this.logger("AMOUNT: BUSD " + (await this.getAssetAmount("BUSD")));
         this.nextOrder = "sell";
         this.logger("NEXTORDER: " + this.nextOrder);
-      }, 5000);
-
-    } else if (rsi > 51 && this.nextOrder === "sell") {
+      }, 10000);
+    } else if (rsi > 55 && this.nextOrder === "sell") {
       this.logger("------------------------------");
       this.logger("RATE: " + 1 / rate);
       this.logger("RSI: " + rsi);
 
-      let res0 = await this.orderMarketSellAll("BUSD_TRY", "BUSD");
-
-      if (res0.data) {
-        let status0 = await this.queryOrder("BUSD_TRY", res0.data.orderId);
-        if (status0.data.status === 2) {
-          this.logger("SELL: BUSD_TRY");
-        } else if (res0.code === 3210) {
-          this.logger("ERROR: SELL BUSD_TRY - There is no BUSD");
-        } else {
-          this.logger("ERROR: SELL BUSD_TRY status: " + status0.data.status);
-        }
-      } else {
-        this.logger("ERROR: SELL BUSD_TRY " + res0.msg);
-      }
-
+      await this.orderMarketSellAll(
+        "BUSD_TRY",
+        busdtryData.close[priceIndex],
+        "BUSD"
+      );
       setTimeout(async () => {
-        let res1 = await this.orderMarketBuyAll("USDT_TRY", "TRY");
-        if (res1.data) {
-          let status1 = await this.queryOrder("USDT_TRY", res1.data.orderId);
-          if (status1.data.status === 2) {
-            this.logger("BUY: USDT_TRY");
-          } else if (res1.code === 3210) {
-            this.logger("ERROR: BUY USDT_TRY - There is no TRY");
-          } else {
-            this.logger("ERROR: BUY USDT_TRY status: " + status1.data.status);
-          }
-        } else {
-          this.logger("ERROR: BUY USDT_TRY " + res1.msg);
-        }
-  
+        await this.orderMarketBuyAll(
+          "USDT_TRY",
+          usdttryData.close[priceIndex],
+          "TRY"
+        );
+
         this.logger("AMOUNT: USDT " + (await this.getAssetAmount("USDT")));
-  
         this.nextOrder = "buy";
         this.logger("NEXTORDER: " + this.nextOrder);
-    }, 5000);
-
-
+      }, 10000);
     }
   }
 
