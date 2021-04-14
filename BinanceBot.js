@@ -24,7 +24,7 @@ export class BinanceBot {
     //this.orderMarketBuy("BUSD_TRY", 10);
     //this.orderMarketSellAll("BUSD_TRY", "BUSD");
     //this.orderMarketBuyAll("USDT_TRY", "TRY");
-    //this.start();
+    this.start();
     //this.queryOrder("BUSD_TRY", 21708732);
   }
 
@@ -300,7 +300,6 @@ export class BinanceBot {
   }
 
   async turn() {
-    this.logger("------------------------------");
     const busdtryData = await this.getKlines(
       "BUSDTRY",
       this.interval + this.intervalType,
@@ -335,6 +334,7 @@ export class BinanceBot {
     const rate = busdusdtData.close[busdusdtData.close.length - 1];
     const rsi = busdusdtData.rsi[index];
     if (rsi < 49 && this.nextOrder === "buy") {
+      this.logger("------------------------------");
       this.logger("RATE: " + rate);
       this.logger("RSI: " + rsi);
 
@@ -342,20 +342,21 @@ export class BinanceBot {
       let status0 = await this.queryOrder("USDT_TRY", res0.data.orderId);
       if (status0 === 2) {
         this.logger("SELL: USDT_TRY");
-        let res1 = await this.orderMarketBuyAll("BUSD_TRY", "TRY");
-        let status1 = await this.queryOrder("BUSD_TRY", res1.data.orderId);
-        if (status1 === 2) {
-          this.logger("BUY: BUSD_TRY");
-        } else {
-          this.logger("ERROR: BUSD_TRY");
-        }
       } else {
         this.logger("ERROR: SELL USDT_TRY");
+      }
+      let res1 = await this.orderMarketBuyAll("BUSD_TRY", "TRY");
+      let status1 = await this.queryOrder("BUSD_TRY", res1.data.orderId);
+      if (status1 === 2) {
+        this.logger("BUY: BUSD_TRY");
+      } else {
+        this.logger("ERROR: BUSD_TRY");
       }
       this.logger("AMOUNT: BUSD " + (await this.getAssetAmount("BUSD")));
       this.nextOrder = "sell";
       this.logger("NEXTORDER: " + this.nextOrder);
     } else if (rsi > 51 && this.nextOrder === "sell") {
+      this.logger("------------------------------");
       this.logger("RATE: " + 1 / rate);
       this.logger("RSI: " + rsi);
 
@@ -363,15 +364,15 @@ export class BinanceBot {
       let status0 = await this.queryOrder("BUSD_TRY", res0.data.orderId);
       if (status0 === 2) {
         this.logger("SELL: BUSD_TRY");
-        let res1 = await this.orderMarketBuyAll("USDT_TRY", "TRY");
-        let status1 = await this.queryOrder("USDT_TRY", res1.data.orderId);
-        if (status1 === 2) {
-          this.logger("BUY: USDT_TRY");
-        } else {
-          this.logger("ERROR: BUY USDT_TRY");
-        }
       } else {
         this.logger("ERROR: SELL BUSD_TRY");
+      }
+      let res1 = await this.orderMarketBuyAll("USDT_TRY", "TRY");
+      let status1 = await this.queryOrder("USDT_TRY", res1.data.orderId);
+      if (status1 === 2) {
+        this.logger("BUY: USDT_TRY");
+      } else {
+        this.logger("ERROR: BUY USDT_TRY");
       }
       this.logger("AMOUNT: USDT " + (await this.getAssetAmount("USDT")));
 
