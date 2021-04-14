@@ -359,13 +359,13 @@ export class BinanceBot {
         let status1 = await this.queryOrder("BUSD_TRY", res1.data.orderId);
         if (status1.data.status === 2) {
           this.logger("BUY: BUSD_TRY");
-        } else if (res0.code === 3210) {
-          this.logger("BUY: BUSD_TRY - There is no TRY");
+        } else if (res1.code === 3210) {
+          this.logger("ERROR: BUY BUSD_TRY - There is no TRY");
         } else {
           this.logger("ERROR: BUY BUSD_TRY");
         }
       } else {
-        this.logger("ERROR: SELL USDT_TRY " + res1.msg);
+        this.logger("ERROR: SELL BUSD_TRY " + res1.msg);
       }
 
       this.logger("AMOUNT: BUSD " + (await this.getAssetAmount("BUSD")));
@@ -383,26 +383,26 @@ export class BinanceBot {
         if (status0.data.status === 2) {
           this.logger("SELL: BUSD_TRY");
         } else if (res0.code === 3210) {
-          this.logger("SELL: BUSD_TRY - There is no BUSD");
+          this.logger("ERROR: SELL BUSD_TRY - There is no BUSD");
         } else {
           this.logger("ERROR: SELL BUSD_TRY");
         }
       } else {
-        this.logger("ERROR: SELL USDT_TRY " + res0.msg);
+        this.logger("ERROR: SELL BUSD_TRY " + res0.msg);
       }
 
       let res1 = await this.orderMarketBuyAll("USDT_TRY", "TRY");
-      if (res0.data) {
+      if (res1.data) {
         let status1 = await this.queryOrder("USDT_TRY", res1.data.orderId);
         if (status1.data.status === 2) {
           this.logger("BUY: USDT_TRY");
-        } else if (res0.code === 3210) {
-          this.logger("BUY: USDT_TRY - There is no TRY");
+        } else if (res1.code === 3210) {
+          this.logger("ERROR: BUY USDT_TRY - There is no TRY");
         } else {
           this.logger("ERROR: BUY USDT_TRY");
         }
       } else {
-        this.logger("ERROR: SELL USDT_TRY " + res0.msg);
+        this.logger("ERROR: SELL USDT_TRY " + res1.msg);
       }
 
       this.logger("AMOUNT: USDT " + (await this.getAssetAmount("USDT")));
