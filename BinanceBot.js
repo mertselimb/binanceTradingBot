@@ -353,7 +353,7 @@ export class BinanceBot {
         this.logger("ERROR: SELL USDT_TRY " + res0.msg);
       }
 
-      setTimeout(() => {
+      setTimeout(async () => {
         let res1 = await this.orderMarketBuyAll("BUSD_TRY", "TRY");
 
         if (res1.data) {
@@ -394,7 +394,7 @@ export class BinanceBot {
         this.logger("ERROR: SELL BUSD_TRY " + res0.msg);
       }
 
-      setTimeout(() => {
+      setTimeout(async () => {
         let res1 = await this.orderMarketBuyAll("USDT_TRY", "TRY");
         if (res1.data) {
           let status1 = await this.queryOrder("USDT_TRY", res1.data.orderId);
