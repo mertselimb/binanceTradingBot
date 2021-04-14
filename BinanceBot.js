@@ -21,12 +21,13 @@ export class BinanceBot {
     this.nextOrder = "sell";
     this.timeZone = timeZone;
     this.logger("BinanceBot initialized.");
+
     //this.stop()
-    this.simulate();
+    //this.simulate();
     //this.orderMarketBuy("BUSD_TRY", 10);
     //this.orderMarketSellAll("BUSD_TRY", "BUSD");
     //this.orderMarketBuyAll("USDT_TRY", "TRY");
-    //this.start();
+    this.start();
     //this.queryOrder("BUSD_TRY", 21708732);
   }
 
