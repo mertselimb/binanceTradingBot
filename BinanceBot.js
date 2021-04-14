@@ -138,7 +138,6 @@ export class BinanceBot {
     }
     const optInTimePeriod = 14;
     busdusdtData = await this.calcRsi(busdusdtData, optInTimePeriod);
-    let nextOrder = "buy";
     const startUSDT = 100000;
     let tl = 0;
     let usdt = startUSDT;
@@ -147,7 +146,7 @@ export class BinanceBot {
     let count = 0;
     busdusdtData.rsi.forEach((rsi, i) => {
       const rate = busdusdtData.close[i + optInTimePeriod];
-      if (rsi < 49 && nextOrder === "buy") {
+      if (rsi < 49 && this.nextOrder === "buy") {
         this.logger("BUY BUSDTRY: ");
         this.logger("1/RATE: " + 1 / rate, "RSI: " + rsi);
         this.logger("USDT: " + usdt);
@@ -157,11 +156,11 @@ export class BinanceBot {
         busd += tl / busdtryData.close[i + optInTimePeriod];
         tl = 0;
         rateResult *= 1 / rate;
-        nextOrder = "sell";
+        this.nextOrder = "sell";
         this.logger("USDT: " + usdt);
         this.logger("BUSD: " + busd);
         count++;
-      } else if (rsi > 51 && nextOrder === "sell") {
+      } else if (rsi > 51 && this.nextOrder === "sell") {
         this.logger("BUY *USDTTRY: ");
         this.logger("RATE: " + rate);
         this.logger("RSI: " + rsi);
@@ -172,7 +171,7 @@ export class BinanceBot {
         usdt += tl / usdttryData.close[i + optInTimePeriod];
         tl = 0;
         rateResult *= rate;
-        nextOrder = "buy";
+        this.nextOrder = "buy";
         count++;
         this.logger("USDT: " + usdt);
         this.logger("BUSD: " + busd);
