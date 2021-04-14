@@ -522,13 +522,13 @@ export class BinanceBot {
       this.logger("RATE: " + rate);
       this.logger("RSI: " + rsi);
 
-      await this.orderMarketSellAll(
+      await this.orderLimitSellAll(
         "USDT_TRY",
         usdttryData.close[priceIndex],
         "USDT"
       );
       setTimeout(async () => {
-        await this.orderMarketBuyAll(
+        await this.orderLimitBuyAll(
           "BUSD_TRY",
           busdtryData.close[priceIndex],
           "TRY"
@@ -543,13 +543,13 @@ export class BinanceBot {
       this.logger("RATE: " + 1 / rate);
       this.logger("RSI: " + rsi);
 
-      await this.orderMarketSellAll(
+      await this.orderLimitSellAll(
         "BUSD_TRY",
         busdtryData.close[priceIndex],
         "BUSD"
       );
       setTimeout(async () => {
-        await this.orderMarketBuyAll(
+        await this.orderLimitBuyAll(
           "USDT_TRY",
           usdttryData.close[priceIndex],
           "TRY"
