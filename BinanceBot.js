@@ -217,7 +217,7 @@ export class BinanceBot {
       price +
       "&side=0&type=1&quantity=" +
       quantity +
-      "%timeInForce=" +
+      "&timeInForce=" +
       this.timeZone +
       "&timestamp=" +
       new Date().getTime();
@@ -310,7 +310,7 @@ export class BinanceBot {
       price +
       "&side=1&type=1&quantity=" +
       quantity +
-      "%timeInForce=" +
+      "&timeInForce=" +
       this.timeZone +
       "&timestamp=" +
       new Date().getTime();
@@ -404,8 +404,12 @@ export class BinanceBot {
     let quantity = await this.getAssetAmount(main);
     quantity = this.toFixed(parseFloat(quantity), 2);
     let queryString =
-      "symbol=" + symbol + "&side=1&type=2&quantity=" + quantity;
-    +"&timestamp=" + new Date().getTime();
+      "symbol=" +
+      symbol +
+      "&side=1&type=2&quantity=" +
+      quantity +
+      "&timestamp=" +
+      new Date().getTime();
     queryString += "&signature=" + this.getSignature(queryString);
 
     const response = await fetch(
