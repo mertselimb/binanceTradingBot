@@ -201,6 +201,7 @@ export class BinanceBot {
   async orderLimitBuyAll(symbol, price, main) {
     let quantity = await this.getAssetAmount(main);
     quantity = this.toFixed(parseFloat(quantity), 2);
+    price = this.toFixed(price, 3);
     this.logger(
       "START BUY LIMIT: " +
         symbol +
@@ -292,7 +293,8 @@ export class BinanceBot {
 
   async orderLimitSellAll(symbol, price, main) {
     let quantity = await this.getAssetAmount(main);
-    quantity = this.toFixed(parseFloat(quantity), 2);
+    quantity = this.toFixed(parseFloat(quantity), 3);
+    price = this.toFixed(price, 3);
     this.logger(
       "START SELL LIMIT: " +
         symbol +
