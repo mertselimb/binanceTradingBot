@@ -9,8 +9,7 @@ export class BinanceBot {
     logger,
     optInTimePeriod = 14,
     interval = 5,
-    intervalType = "m",
-    timeZone = "TRT"
+    intervalType = "m"
   ) {
     this.apiKey = apiKey;
     this.secretKey = secretKey;
@@ -18,15 +17,28 @@ export class BinanceBot {
     this.optInTimePeriod = optInTimePeriod;
     this.interval = interval;
     this.intervalType = intervalType;
-    this.nextOrder = "sell";
-    this.timeZone = timeZone;
     this.logger("BinanceBot initialized.");
 
     //this.stop()
     //this.simulate();
     //this.orderMarketBuy("BUSD_TRY", 10);
+
     //this.orderMarketSellAll("BUSD_TRY", "BUSD");
     //this.orderMarketBuyAll("USDT_TRY", "TRY");
+    let deneme = async () => {
+      console.log(deneme);
+      await this.updateAccountAssets();
+      const data = await this.getData();
+      console.log(
+        await this.orderLimitBuyAll(
+          "BUSD_TRY",
+          data.busdtry.close[data.busdusdt.close.length - 1],
+          "TRY"
+        )
+      );
+    };
+    //deneme();
+
     this.start();
     //this.queryOrder("BUSD_TRY", 21708732);
   }
@@ -58,8 +70,7 @@ export class BinanceBot {
     this.accountAssets = json.data.accountAssets;
   }
 
-  async getAssetAmount(asset) {
-    await this.updateAccountAssets();
+  getAssetAmount(asset) {
     return this.accountAssets.find((x) => x.asset === asset).free;
   }
 
@@ -199,9 +210,10 @@ export class BinanceBot {
   }
 
   async orderLimitBuyAll(symbol, price, main) {
+    this.logger("BUY ORDER: " + main + " PRICE: " + price);
     let quantity = await this.getAssetAmount(main);
-    quantity = this.toFixed(parseFloat(quantity), 2);
-    price = this.toFixed(price, 2);
+    quantity = this.toFixed(parseFloat(quantity / price), 2);
+    price = this.toFixed(price, 3);
     this.logger(
       "START BUY LIMIT: " +
         symbol +
@@ -217,12 +229,11 @@ export class BinanceBot {
       price +
       "&side=0&type=1&quantity=" +
       quantity +
-      "&timeInForce=" +
-      this.timeZone +
       "&timestamp=" +
       new Date().getTime();
     queryString += "&signature=" + this.getSignature(queryString);
 
+    console.log(queryString);
     const response = await fetch(
       "http://www.trbinance.com/open/v1/orders" + "?" + queryString,
       {
@@ -236,29 +247,15 @@ export class BinanceBot {
 
     let status;
     if (json.data) {
-      const query = await this.queryOrder(symbol, json.data.orderId);
-      status = query.data.status;
-      if (query.data.status === 2) {
-        this.logger(
-          "DONE BUY LIMIT: " +
-            symbol +
-            " quantity: " +
-            quantity +
-            " price: " +
-            price
-        );
-      } else {
-        this.logger(
-          "ERROR BUY LIMIT: " +
-            symbol +
-            " quantity: " +
-            quantity +
-            " price: " +
-            price +
-            " status: " +
-            query.data.status
-        );
-      }
+      await this.queryOrder(symbol, json.data.orderId);
+      this.logger(
+        "REQUESTED BUY LIMIT: " +
+          symbol +
+          " quantity: " +
+          quantity +
+          " price: " +
+          price
+      );
     } else {
       status = json.code;
       if (json.code === 3210) {
@@ -286,15 +283,14 @@ export class BinanceBot {
       }
     }
 
-    const result = { ...json, status };
-    console.log(result);
-    return result;
+    return { ...json, status };
   }
 
   async orderLimitSellAll(symbol, price, main) {
+    this.logger("SELL ORDER: " + main + " price: " + price);
     let quantity = await this.getAssetAmount(main);
-    quantity = this.toFixed(parseFloat(quantity), 2);
-    price = this.toFixed(price, 2);
+    quantity = this.toFixed(parseFloat(quantity), 3);
+    price = this.toFixed(price, 3);
     this.logger(
       "START SELL LIMIT: " +
         symbol +
@@ -310,12 +306,10 @@ export class BinanceBot {
       price +
       "&side=1&type=1&quantity=" +
       quantity +
-      "&timeInForce=" +
-      this.timeZone +
       "&timestamp=" +
       new Date().getTime();
     queryString += "&signature=" + this.getSignature(queryString);
-
+    console.log(queryString);
     const response = await fetch(
       "http://www.trbinance.com/open/v1/orders" + "?" + queryString,
       {
@@ -329,45 +323,15 @@ export class BinanceBot {
 
     let status;
     if (json.data) {
-      let query = await this.queryOrder(symbol, json.data.orderId);
-      status = query.data.status;
-      if (query.data.status === 2) {
-        this.logger(
-          "DONE SELL LIMIT: " +
-            symbol +
-            " quantity: " +
-            quantity +
-            " price: " +
-            price
-        );
-      } else {
-        let tryAmount = 1;
-        while (query.data.status != 2 || tryAmount < 25) {
-          query = await this.queryOrder(symbol, json.data.orderId);
-          tryAmount++;
-        }
-        if (query.data.status === 2) {
-          this.logger(
-            "DONE SELL LIMIT: " +
-              symbol +
-              " quantity: " +
-              quantity +
-              " price: " +
-              price
-          );
-        } else {
-          this.logger(
-            "ERROR SELL LIMIT: " +
-              symbol +
-              " quantity: " +
-              quantity +
-              " price: " +
-              price +
-              " status: " +
-              query.data.status
-          );
-        }
-      }
+      await this.queryOrder(symbol, json.data.orderId);
+      this.logger(
+        "REQUESTED SELL LIMIT: " +
+          symbol +
+          " quantity: " +
+          quantity +
+          " price: " +
+          price
+      );
     } else {
       status = json.code;
       if (json.code === 3210) {
@@ -395,9 +359,7 @@ export class BinanceBot {
       }
     }
 
-    const result = { ...json, status };
-    console.log(result);
-    return result;
+    return { ...json, status };
   }
 
   async orderMarketSellAll(symbol, main) {
@@ -477,23 +439,128 @@ export class BinanceBot {
       }
     );
     const json = await response.json();
-    console.log(json);
     return { ...json, status: response.status };
   }
 
   async turn() {
-    const busdtryData = await this.getKlines(
+    const data = await this.getData();
+    const index = data.busdusdt.rsi.length - 1;
+    const priceIndex = data.busdusdt.close.length - 1;
+    const rate = data.busdusdt.close[priceIndex];
+    const rsi = data.busdusdt.rsi[index];
+    await this.updateAccountAssets();
+    this.logger("------------------------------");
+    this.logger("RATE: " + rate);
+    this.logger("RSI: " + rsi);
+    this.logger(
+      "USDT :" +
+        this.getAssetAmount("USDT") +
+        " BUSD : " +
+        this.getAssetAmount("BUSD") +
+        " TRY: " +
+        this.getAssetAmount("TRY")
+    );
+    if (rsi < 45) {
+      if (this.getAssetAmount("USDT") > 0.01) {
+        this.checkOrder(
+          await this.orderLimitSellAll(
+            "USDT_TRY",
+            data.usdttry.close[priceIndex],
+            "USDT"
+          ),
+          {
+            symbol: "BUSD_TRY",
+            price: data.busdtry.close[priceIndex],
+            main: "TRY",
+          }
+        );
+      }
+      if (this.getAssetAmount("TRY") > 0.01) {
+        this.checkOrder(
+          await this.orderLimitBuyAll(
+            "BUSD_TRY",
+            data.busdtry.close[priceIndex],
+            "TRY"
+          )
+        );
+      }
+    } else if (rsi > 55) {
+      if (this.getAssetAmount("BUSD") > 0.01) {
+        this.checkOrder(
+          await this.orderLimitSellAll(
+            "BUSD_TRY",
+            data.busdtry.close[priceIndex],
+            "BUSD"
+          ),
+          {
+            symbol: "USDT_TRY",
+            price: data.busdtry.close[priceIndex],
+            main: "TRY",
+          }
+        );
+      }
+      if (this.getAssetAmount("TRY") > 0.01) {
+        this.checkOrder(
+          await this.orderLimitBuyAll(
+            "USDT_TRY",
+            data.busdtry.close[priceIndex],
+            "TRY"
+          )
+        );
+      }
+    }
+  }
+
+  async checkOrder(order, nextOrder) {
+    console.log(order);
+    console.log(nextOrder);
+    const orderStatus = await this.queryOrder(order.symbol, order.id);
+    if (orderStatus === 2) {
+      if (nextOrder) {
+        this.logger("SELL ORDER DONE: " + order.symbol);
+        this.checkOrder(
+          await this.orderLimitBuyAll(
+            nextOrder.symbol,
+            nextOrder.price,
+            nextOrder.main
+          )
+        );
+      } else {
+        this.logger("BUY ORDER DONE: " + order.symbol);
+      }
+    } else if (orderStatus === 1 || orderStatus === 3) {
+      this.logger(
+        "CHECKING ORDER AGAIN IN 30 SECONDS: " +
+          order.symbol +
+          " STATUS " +
+          orderStatus
+      );
+      setTimeout(() => this.checkOrder(order, nextOrder), 30000);
+    } else {
+      this.logger(
+        "ORDER FAILED: " +
+          order.symbol +
+          " STATUS " +
+          orderStatus +
+          " MESSAGE " +
+          (order.msg || order.message)
+      );
+    }
+  }
+
+  async getData() {
+    const busdtry = await this.getKlines(
       "BUSDTRY",
       this.interval + this.intervalType,
       this.optInTimePeriod + 1
     );
-    const usdttryData = await this.getKlines(
+    const usdttry = await this.getKlines(
       "USDTTRY",
       this.interval + this.intervalType,
       this.optInTimePeriod + 1
     );
 
-    let busdusdtData = {
+    let busdusdt = {
       open: [],
       close: [],
       high: [],
@@ -502,63 +569,16 @@ export class BinanceBot {
       rsi: [],
     };
 
-    for (let i = 0; i < busdtryData.open.length; i++) {
-      busdusdtData.open.push(busdtryData.open[i] / usdttryData.open[i]);
-      busdusdtData.close.push(busdtryData.close[i] / usdttryData.close[i]);
-      busdusdtData.high.push(busdtryData.high[i] / usdttryData.high[i]);
-      busdusdtData.low.push(busdtryData.low[i] / usdttryData.low[i]);
-      busdusdtData.volume.push(busdtryData.volume[i] / usdttryData.volume[i]);
+    for (let i = 0; i < busdtry.open.length; i++) {
+      busdusdt.open.push(busdtry.open[i] / usdttry.open[i]);
+      busdusdt.close.push(busdtry.close[i] / usdttry.close[i]);
+      busdusdt.high.push(busdtry.high[i] / usdttry.high[i]);
+      busdusdt.low.push(busdtry.low[i] / usdttry.low[i]);
+      busdusdt.volume.push(busdtry.volume[i] / usdttry.volume[i]);
     }
 
-    busdusdtData = await this.calcRsi(busdusdtData, this.optInTimePeriod);
-
-    const index = busdusdtData.rsi.length - 1;
-    const priceIndex = busdusdtData.close.length - 1;
-    const rate = busdusdtData.close[priceIndex];
-    const rsi = busdusdtData.rsi[index];
-    if (rsi < 45 && this.nextOrder === "buy") {
-      this.logger("------------------------------");
-      this.logger("RATE: " + 1 / rate);
-      this.logger("RSI: " + rsi);
-
-      await this.orderLimitSellAll(
-        "USDT_TRY",
-        usdttryData.close[priceIndex],
-        "USDT"
-      );
-      setTimeout(async () => {
-        await this.orderLimitBuyAll(
-          "BUSD_TRY",
-          busdtryData.close[priceIndex],
-          "TRY"
-        );
-
-        this.logger("AMOUNT: BUSD " + (await this.getAssetAmount("BUSD")));
-        this.nextOrder = "sell";
-        this.logger("NEXTORDER: " + this.nextOrder);
-      }, 10000);
-    } else if (rsi > 55 && this.nextOrder === "sell") {
-      this.logger("------------------------------");
-      this.logger("RATE: " + rate);
-      this.logger("RSI: " + rsi);
-
-      await this.orderLimitSellAll(
-        "BUSD_TRY",
-        busdtryData.close[priceIndex],
-        "BUSD"
-      );
-      setTimeout(async () => {
-        await this.orderLimitBuyAll(
-          "USDT_TRY",
-          usdttryData.close[priceIndex],
-          "TRY"
-        );
-
-        this.logger("AMOUNT: USDT " + (await this.getAssetAmount("USDT")));
-        this.nextOrder = "buy";
-        this.logger("NEXTORDER: " + this.nextOrder);
-      }, 10000);
-    }
+    busdusdt = await this.calcRsi(busdusdt, this.optInTimePeriod);
+    return { usdttry, busdtry, busdusdt };
   }
 
   async simulate() {
