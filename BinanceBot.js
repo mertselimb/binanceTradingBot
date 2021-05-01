@@ -289,7 +289,7 @@ export class BinanceBot {
   async orderLimitSellAll(symbol, price, main) {
     this.logger("SELL ORDER: " + main + " price: " + price);
     let quantity = await this.getAssetAmount(main);
-    quantity = this.toFixed(parseFloat(quantity), 3);
+    quantity = this.toFixed(parseFloat(quantity), 2);
     price = this.toFixed(price, 3);
     this.logger(
       "START SELL LIMIT: " +
@@ -461,13 +461,14 @@ export class BinanceBot {
         this.getAssetAmount("TRY")
     );
     if (rsi < 45) {
-      if (this.getAssetAmount("USDT") > 0.01) {
+      if (this.getAssetAmount("USDT") > 0.1) {
+        const newOrder = await this.orderLimitSellAll(
+          "USDT_TRY",
+          data.usdttry.close[priceIndex],
+          "USDT"
+        );
         this.checkOrder(
-          await this.orderLimitSellAll(
-            "USDT_TRY",
-            data.usdttry.close[priceIndex],
-            "USDT"
-          ),
+          { ...newOrder, symbol: "USDT_TRY" },
           {
             symbol: "BUSD_TRY",
             price: data.busdtry.close[priceIndex],
@@ -475,23 +476,23 @@ export class BinanceBot {
           }
         );
       }
-      if (this.getAssetAmount("TRY") > 0.01) {
-        this.checkOrder(
-          await this.orderLimitBuyAll(
-            "BUSD_TRY",
-            data.busdtry.close[priceIndex],
-            "TRY"
-          )
+      if (this.getAssetAmount("TRY") > 1) {
+        const newOrder = await this.orderLimitBuyAll(
+          "BUSD_TRY",
+          data.busdtry.close[priceIndex],
+          "TRY"
         );
+        this.checkOrder({ ...newOrder, symbol: "BUSD_TRY" });
       }
     } else if (rsi > 55) {
-      if (this.getAssetAmount("BUSD") > 0.01) {
+      if (this.getAssetAmount("BUSD") > 0.1) {
+        const newOrder = await this.orderLimitSellAll(
+          "BUSD_TRY",
+          data.busdtry.close[priceIndex],
+          "BUSD"
+        );
         this.checkOrder(
-          await this.orderLimitSellAll(
-            "BUSD_TRY",
-            data.busdtry.close[priceIndex],
-            "BUSD"
-          ),
+          { ...newOrder, symbol: "BUSD_TRY" },
           {
             symbol: "USDT_TRY",
             price: data.busdtry.close[priceIndex],
@@ -499,36 +500,33 @@ export class BinanceBot {
           }
         );
       }
-      if (this.getAssetAmount("TRY") > 0.01) {
-        this.checkOrder(
-          await this.orderLimitBuyAll(
-            "USDT_TRY",
-            data.busdtry.close[priceIndex],
-            "TRY"
-          )
+      if (this.getAssetAmount("TRY") > 1) {
+        const newOrder = await this.orderLimitBuyAll(
+          "USDT_TRY",
+          data.busdtry.close[priceIndex],
+          "TRY"
         );
+        this.checkOrder({ ...newOrder, symbol: "USDT_TRY" });
       }
     }
   }
 
   async checkOrder(order, nextOrder) {
-    console.log(order);
-    console.log(nextOrder);
-    const orderStatus = await this.queryOrder(order.symbol, order.id);
+    const res = await this.queryOrder(order.symbol, order.data.orderId);
+    const orderStatus = res.data.status;
     if (orderStatus === 2) {
       if (nextOrder) {
         this.logger("SELL ORDER DONE: " + order.symbol);
-        this.checkOrder(
-          await this.orderLimitBuyAll(
-            nextOrder.symbol,
-            nextOrder.price,
-            nextOrder.main
-          )
+        const newOrder = await this.orderLimitBuyAll(
+          nextOrder.symbol,
+          nextOrder.price,
+          nextOrder.main
         );
+        this.checkOrder({ ...newOrder, symbol: nextOrder.symbol });
       } else {
         this.logger("BUY ORDER DONE: " + order.symbol);
       }
-    } else if (orderStatus === 1 || orderStatus === 3) {
+    } else if (orderStatus === 0 || orderStatus === 1) {
       this.logger(
         "CHECKING ORDER AGAIN IN 30 SECONDS: " +
           order.symbol +
@@ -684,7 +682,7 @@ export class BinanceBot {
     this.turn();
     this.turnInterval = setInterval(() => {
       this.turn();
-    }, 300000);
+    }, 10000);
   }
 
   async stop() {
