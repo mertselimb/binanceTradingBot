@@ -210,18 +210,9 @@ export class BinanceBot {
   }
 
   async orderLimitBuyAll(symbol, price, main) {
-    this.logger("BUY ORDER: " + main + " PRICE: " + price);
     let quantity = await this.getAssetAmount(main);
     quantity = this.toFixed(parseFloat(quantity / price), 2);
     price = this.toFixed(price, 3);
-    this.logger(
-      "START BUY LIMIT: " +
-        symbol +
-        " quantity: " +
-        quantity +
-        " price: " +
-        price
-    );
     let queryString =
       "symbol=" +
       symbol +
@@ -233,7 +224,6 @@ export class BinanceBot {
       new Date().getTime();
     queryString += "&signature=" + this.getSignature(queryString);
 
-    console.log(queryString);
     const response = await fetch(
       "http://www.trbinance.com/open/v1/orders" + "?" + queryString,
       {
@@ -287,18 +277,9 @@ export class BinanceBot {
   }
 
   async orderLimitSellAll(symbol, price, main) {
-    this.logger("SELL ORDER: " + main + " price: " + price);
     let quantity = await this.getAssetAmount(main);
     quantity = this.toFixed(parseFloat(quantity), 2);
     price = this.toFixed(price, 3);
-    this.logger(
-      "START SELL LIMIT: " +
-        symbol +
-        " quantity: " +
-        quantity +
-        " price: " +
-        price
-    );
     let queryString =
       "symbol=" +
       symbol +
@@ -309,7 +290,6 @@ export class BinanceBot {
       "&timestamp=" +
       new Date().getTime();
     queryString += "&signature=" + this.getSignature(queryString);
-    console.log(queryString);
     const response = await fetch(
       "http://www.trbinance.com/open/v1/orders" + "?" + queryString,
       {
@@ -460,7 +440,7 @@ export class BinanceBot {
         " TRY: " +
         this.getAssetAmount("TRY")
     );
-    if (rsi < 45) {
+    if (rsi < 40) {
       if (this.getAssetAmount("USDT") > 0.1) {
         const newOrder = await this.orderLimitSellAll(
           "USDT_TRY",
@@ -484,7 +464,7 @@ export class BinanceBot {
         );
         this.checkOrder({ ...newOrder, symbol: "BUSD_TRY" });
       }
-    } else if (rsi > 55) {
+    } else if (rsi > 60) {
       if (this.getAssetAmount("BUSD") > 0.1) {
         const newOrder = await this.orderLimitSellAll(
           "BUSD_TRY",
@@ -512,37 +492,39 @@ export class BinanceBot {
   }
 
   async checkOrder(order, nextOrder) {
-    const res = await this.queryOrder(order.symbol, order.data.orderId);
-    const orderStatus = res.data.status;
-    if (orderStatus === 2) {
-      if (nextOrder) {
-        this.logger("SELL ORDER DONE: " + order.symbol);
-        const newOrder = await this.orderLimitBuyAll(
-          nextOrder.symbol,
-          nextOrder.price,
-          nextOrder.main
+    if (order.data) {
+      const res = await this.queryOrder(order.symbol, order.data.orderId);
+      const orderStatus = res.data.status;
+      if (orderStatus === 2) {
+        if (nextOrder) {
+          this.logger("SELL ORDER DONE: " + order.symbol);
+          const newOrder = await this.orderLimitBuyAll(
+            nextOrder.symbol,
+            nextOrder.price,
+            nextOrder.main
+          );
+          this.checkOrder({ ...newOrder, symbol: nextOrder.symbol });
+        } else {
+          this.logger("BUY ORDER DONE: " + order.symbol);
+        }
+      } else if (orderStatus === 0 || orderStatus === 1) {
+        this.logger(
+          "CHECKING ORDER AGAIN IN 30 SECONDS: " +
+            order.symbol +
+            " STATUS " +
+            orderStatus
         );
-        this.checkOrder({ ...newOrder, symbol: nextOrder.symbol });
+        setTimeout(() => this.checkOrder(order, nextOrder), 30000);
       } else {
-        this.logger("BUY ORDER DONE: " + order.symbol);
+        this.logger(
+          "ORDER FAILED: " +
+            order.symbol +
+            " STATUS " +
+            orderStatus +
+            " MESSAGE " +
+            (order.msg || order.message)
+        );
       }
-    } else if (orderStatus === 0 || orderStatus === 1) {
-      this.logger(
-        "CHECKING ORDER AGAIN IN 30 SECONDS: " +
-          order.symbol +
-          " STATUS " +
-          orderStatus
-      );
-      setTimeout(() => this.checkOrder(order, nextOrder), 30000);
-    } else {
-      this.logger(
-        "ORDER FAILED: " +
-          order.symbol +
-          " STATUS " +
-          orderStatus +
-          " MESSAGE " +
-          (order.msg || order.message)
-      );
     }
   }
 
@@ -682,7 +664,7 @@ export class BinanceBot {
     this.turn();
     this.turnInterval = setInterval(() => {
       this.turn();
-    }, 10000);
+    }, 300000);
   }
 
   async stop() {
