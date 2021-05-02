@@ -491,7 +491,7 @@ export class BinanceBot {
             " STATUS " +
             orderStatus
         );
-        setTimeout(() => this.checkOrder(order, nextOrder), 30000);
+        setTimeout(() => this.checkOrder(order), 30000);
       } else {
         this.logger(
           "ORDER FAILED: " + order.symbol + " STATUS: " + orderStatus
