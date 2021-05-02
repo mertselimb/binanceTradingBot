@@ -42,9 +42,8 @@ app.get("/stop", function (req, res) {
   res.send("stopped");
 });
 
-//forever --sourceDir ./ -c "npm start" /
 //ps xw
-// nohup npm start > logs.txt
+// nohup npm start >> logs.txt &
 app.listen(process.env.PORT || port, () => {
   logger(
     `Binance Trading Bot listening at http://localhost:${
