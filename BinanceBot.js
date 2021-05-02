@@ -212,7 +212,7 @@ export class BinanceBot {
   async orderLimitBuyAll(symbol, price, main) {
     let quantity = await this.getAssetAmount(main);
     quantity = this.toFixed(parseFloat(quantity / price), 2);
-    price = this.toFixed(price, 3);
+    price = this.toFixed(price, 4);
     let queryString =
       "symbol=" +
       symbol +
@@ -281,7 +281,7 @@ export class BinanceBot {
   async orderLimitSellAll(symbol, price, main) {
     let quantity = await this.getAssetAmount(main);
     quantity = this.toFixed(parseFloat(quantity), 2);
-    price = this.toFixed(price, 3);
+    price = this.toFixed(price, 4);
     let queryString =
       "symbol=" +
       symbol +
@@ -480,7 +480,6 @@ export class BinanceBot {
   async checkOrder(order) {
     if (order.data) {
       const res = await this.queryOrder(order.symbol, order.data.orderId);
-      console.log({ res });
       const orderStatus = res.data.status;
       if (orderStatus === 2) {
         this.logger(order.type + " ORDER DONE: " + order.symbol);
@@ -495,12 +494,7 @@ export class BinanceBot {
         setTimeout(() => this.checkOrder(order, nextOrder), 30000);
       } else {
         this.logger(
-          "ORDER FAILED: " +
-            order.symbol +
-            " STATUS " +
-            orderStatus +
-            " MESSAGE " +
-            (order.msg || order.message)
+          "ORDER FAILED: " + order.symbol + " STATUS: " + orderStatus
         );
       }
     }
