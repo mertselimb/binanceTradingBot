@@ -244,7 +244,9 @@ export class BinanceBot {
           " quantity: " +
           quantity +
           " price: " +
-          price
+          price +
+          " orderID : " +
+          json.data.orderId
       );
     } else {
       status = json.code;
@@ -273,8 +275,7 @@ export class BinanceBot {
       }
     }
 
-    const output = { ...json, status };
-    this.checkOrder({ ...output, symbol, type: "BUY" });
+    this.checkOrder({ ...json, status, symbol, type: "BUY", price });
     return output;
   }
 
@@ -312,7 +313,9 @@ export class BinanceBot {
           " quantity: " +
           quantity +
           " price: " +
-          price
+          price +
+          " orderID : " +
+          json.data.orderId
       );
     } else {
       status = json.code;
@@ -341,8 +344,7 @@ export class BinanceBot {
       }
     }
 
-    const output = { ...json, status };
-    this.checkOrder({ ...output, symbol, type: "SELL" });
+    this.checkOrder({ ...json, symbol, type: "SELL", price, status });
     return output;
   }
 
@@ -433,16 +435,24 @@ export class BinanceBot {
     const rate = data.busdusdt.close[priceIndex];
     const rsi = data.busdusdt.rsi[index];
     await this.updateAccountAssets();
-    this.logger("------------------------------");
-    this.logger("RATE: " + rate);
-    this.logger("RSI: " + rsi);
+    const sumUSDT =
+      parseFloat(this.getAssetAmount("USDT")) +
+      parseFloat(this.getAssetAmount("BUSD")) *
+        data.busdusdt.close[priceIndex] +
+      parseFloat(this.getAssetAmount("TRY")) / data.usdttry.close[priceIndex];
     this.logger(
-      "USDT :" +
+      "RATE: " +
+        rate +
+        " RSI: " +
+        rsi +
+        " USDT :" +
         this.getAssetAmount("USDT") +
         " BUSD : " +
         this.getAssetAmount("BUSD") +
         " TRY: " +
-        this.getAssetAmount("TRY")
+        this.getAssetAmount("TRY") +
+        " SUM IN USDT: " +
+        sumUSDT
     );
     if (rsi < 45) {
       if (this.getAssetAmount("USDT") > 0.1) {
@@ -482,19 +492,28 @@ export class BinanceBot {
       const res = await this.queryOrder(order.symbol, order.data.orderId);
       const orderStatus = res.data.status;
       if (orderStatus === 2) {
-        this.logger(order.type + " ORDER DONE: " + order.symbol);
+        this.logger(
+          order.type +
+            " ORDER DONE: " +
+            order.symbol +
+            " PRICE: " +
+            order.price +
+            " orderID : " +
+            json.data.orderId
+        );
         this.turn();
       } else if (orderStatus === 0 || orderStatus === 1) {
-        this.logger(
-          "CHECKING ORDER AGAIN IN 30 SECONDS: " +
-            order.symbol +
-            " STATUS " +
-            orderStatus
-        );
         setTimeout(() => this.checkOrder(order), 30000);
       } else {
         this.logger(
-          "ORDER FAILED: " + order.symbol + " STATUS: " + orderStatus
+          "ORDER FAILED: " +
+            order.symbol +
+            " STATUS: " +
+            orderStatus +
+            " PRICE: " +
+            order.price +
+            " orderID : " +
+            json.data.orderId
         );
       }
     }
